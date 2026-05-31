@@ -1,6 +1,9 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseStaticCSSAndStyledTemplate(t *testing.T) {
 	source := `import styled from "@emotion/styled"
@@ -53,6 +56,50 @@ func TestParseDynamicInterpolation(t *testing.T) {
 	}
 }
 
+func TestParseExportedStyledTemplateWithGeneric(t *testing.T) {
+	source := `type ButtonProps = { disabled?: boolean }
+
+export const Button = styled.button<ButtonProps>` + "`" + `
+  color: red;
+` + "`"
+
+	styles, err := Parse(source)
+	if err != nil {
+		t.Fatalf("Parse returned error: %v", err)
+	}
+	if len(styles) != 1 {
+		t.Fatalf("expected 1 style, got %d", len(styles))
+	}
+	if styles[0].Name != "Button" {
+		t.Fatalf("unexpected style name: %s", styles[0].Name)
+	}
+	if styles[0].Line != 3 {
+		t.Fatalf("unexpected line: %d", styles[0].Line)
+	}
+}
+
+func TestParseObjectPropertyCSSTemplates(t *testing.T) {
+	source := `export const sizes = {
+  sm: css` + "`" + `
+    height: 32px;
+  ` + "`" + `,
+  md: css` + "`" + `
+    height: 40px;
+  ` + "`" + `,
+}`
+
+	styles, err := Parse(source)
+	if err != nil {
+		t.Fatalf("Parse returned error: %v", err)
+	}
+	if len(styles) != 2 {
+		t.Fatalf("expected 2 styles, got %d", len(styles))
+	}
+	if styles[0].Name != "sm" || styles[1].Name != "md" {
+		t.Fatalf("unexpected style names: %s, %s", styles[0].Name, styles[1].Name)
+	}
+}
+
 func TestParseStandaloneDynamicInterpolation(t *testing.T) {
 	source := "const boxStyle = css`${baseStyle}`"
 
@@ -63,9 +110,30 @@ func TestParseStandaloneDynamicInterpolation(t *testing.T) {
 	if len(styles) != 1 {
 		t.Fatalf("expected 1 style, got %d", len(styles))
 	}
-	want := "--emotion-to-scss-dynamic-1: __emotion_to_scss_dynamic_1__"
+	want := "--emotion-to-scss-dynamic-1: __emotion_to_scss_dynamic_1__;"
 	if styles[0].CSS != want {
 		t.Fatalf("unexpected CSS: %q", styles[0].CSS)
+	}
+}
+
+func TestParseStandaloneDynamicInterpolationAfterNestedBlock(t *testing.T) {
+	source := `const boxStyle = css` + "`" + `
+  &:hover {
+    color: red;
+  }
+
+  ${baseStyle}
+` + "`"
+
+	styles, err := Parse(source)
+	if err != nil {
+		t.Fatalf("Parse returned error: %v", err)
+	}
+	if len(styles) != 1 {
+		t.Fatalf("expected 1 style, got %d", len(styles))
+	}
+	if !strings.Contains(styles[0].CSS, "--emotion-to-scss-dynamic-1: __emotion_to_scss_dynamic_1__;") {
+		t.Fatalf("expected standalone interpolation declaration, got %q", styles[0].CSS)
 	}
 }
 

@@ -3,12 +3,16 @@ package parser
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"emotion-to-scss/internal/domain"
 )
 
-var styleStartPattern = regexp.MustCompile(`\b(?:const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*(?:css|styled(?:\.[A-Za-z_$][A-Za-z0-9_$]*)?)\s*` + "`")
+var styleStartPatterns = []*regexp.Regexp{
+	regexp.MustCompile("\\b(?:export\\s+)?(?:const|let|var)\\s+([A-Za-z_$][A-Za-z0-9_$]*)\\s*(?::[^=]+)?=\\s*(?:css(?:<[^`]+>)?|styled(?:\\.[A-Za-z_$][A-Za-z0-9_$]*)?(?:<[^`]+>)?)\\s*`"),
+	regexp.MustCompile("(?m)(?:^|[,{]\\s*)([A-Za-z_$][A-Za-z0-9_$]*)\\s*:\\s*css(?:<[^`]+>)?\\s*`"),
+}
 
 type ParseError struct {
 	Line int
@@ -23,14 +27,13 @@ func (e *ParseError) Error() string {
 }
 
 func Parse(source string) ([]domain.Style, error) {
-	matches := styleStartPattern.FindAllStringSubmatchIndex(source, -1)
+	matches := findStyleStarts(source)
 	styles := make([]domain.Style, 0, len(matches))
 
 	for _, match := range matches {
-		name := source[match[2]:match[3]]
-		templateStart := match[1] - 1
-		line := lineNumber(source, match[0])
-		css, expressions, _, err := scanTemplate(source, templateStart)
+		name := source[match.nameStart:match.nameEnd]
+		line := lineNumber(source, match.nameStart)
+		css, expressions, _, err := scanTemplate(source, match.templateStart)
 		if err != nil {
 			return nil, &ParseError{Line: line, Err: err}
 		}
@@ -44,6 +47,33 @@ func Parse(source string) ([]domain.Style, error) {
 	}
 
 	return styles, nil
+}
+
+type styleStart struct {
+	start         int
+	end           int
+	nameStart     int
+	nameEnd       int
+	templateStart int
+}
+
+func findStyleStarts(source string) []styleStart {
+	var starts []styleStart
+	for _, pattern := range styleStartPatterns {
+		for _, match := range pattern.FindAllStringSubmatchIndex(source, -1) {
+			starts = append(starts, styleStart{
+				start:         match[0],
+				end:           match[1],
+				nameStart:     match[2],
+				nameEnd:       match[3],
+				templateStart: match[1] - 1,
+			})
+		}
+	}
+	sort.Slice(starts, func(i, j int) bool {
+		return starts[i].start < starts[j].start
+	})
+	return starts
 }
 
 func scanTemplate(source string, start int) (string, []domain.Expression, int, error) {
@@ -82,6 +112,7 @@ func scanTemplate(source string, start int) (string, []domain.Expression, int, e
 					out.WriteString(fmt.Sprint(len(expressions)))
 					out.WriteString(": ")
 					out.WriteString(placeholder)
+					out.WriteString(";")
 				} else {
 					out.WriteString(placeholder)
 				}
@@ -160,7 +191,7 @@ func interpolationStartsStatement(css string) bool {
 		switch css[i] {
 		case ' ', '\t', '\r', '\n':
 			continue
-		case '{', ';':
+		case '{', '}', ';':
 			return true
 		default:
 			return false
