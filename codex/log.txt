@@ -1,0 +1,38 @@
+## 実装内容の概略
+
+Go module として emotion-to-scss CLI を実装しました。`convert`、`verify`、`check` コマンドを追加し、Emotion の `css` tagged template literal と `styled.*` tagged template literal を抽出して SCSS に変換できるようにしました。動的補間 `${...}` は対象に含め、検証時に扱える安定した placeholder へ置換します。
+
+実装内容の詳細:
+- Go module を追加し、CLI エントリポイントを `cmd/emotion-to-scss/main.go` に作成しました。
+- `internal/parser` で style 変数名、template body、動的補間、行番号を抽出します。動的補間は値位置では placeholder、単独位置では custom property placeholder に変換します。
+- `internal/converter` で style 変数名を class name とする SCSS を生成します。
+- `internal/scss` で簡易 SCSS コンパイルを実装し、ネストセレクタと at-rule を CSS へ展開します。
+- `internal/cssast` で CSS AST のパースと等価比較を実装しました。
+- `internal/verifier` で変換元 style と生成 SCSS の CSS AST 比較を行います。
+- `internal/report` で `summary` と `files` を含む JSON レポート出力を実装しました。
+- `internal/app` で CLI 引数、対象ファイル収集、出力、終了コード制御を実装しました。
+- 主要な正常系・異常系テストを追加しました。
+- README に使い方、コマンド、オプション、exit code を追記しました。
+
+変更ファイル:
+- `go.mod`
+- `cmd/emotion-to-scss/main.go`
+- `internal/domain/domain.go`
+- `internal/parser/parser.go`
+- `internal/parser/parser_test.go`
+- `internal/converter/converter.go`
+- `internal/converter/converter_test.go`
+- `internal/scss/compiler.go`
+- `internal/scss/compiler_test.go`
+- `internal/cssast/cssast.go`
+- `internal/verifier/verifier.go`
+- `internal/verifier/verifier_test.go`
+- `internal/report/report.go`
+- `internal/app/app.go`
+- `internal/app/app_test.go`
+- `README.md`
+- `codex/log.txt`
+
+検証:
+- `go test ./...` を実行し、成功しました。sandbox 内では Go build cache のアクセス制限に当たったため、権限付きで再実行して確認しました。
+- `pnpm test` は `package.json` が存在しない Go module のため実行していません。
