@@ -1,5 +1,24 @@
 # LOG
 
+## basic-ok fixture の確認
+
+`test-css\basic-ok` が等価ケースとして成功するよう、単純な Emotion 補間の正規化を修正しました。
+
+実装内容の詳細:
+- Emotion CSS の `${COLOR}` のような単純な識別子補間を `var(--COLOR)` として扱うようにしました。
+- 同名 SCSS 側の `var(--COLOR)` と正規化後 CSS AST が一致するようにしました。
+- 識別子以外の複雑な補間は従来どおり placeholder に正規化します。
+- parser の単体テストに、単純識別子補間が CSS variable になるケースを追加しました。
+
+変更ファイル:
+- `internal/parser/parser.go`
+- `internal/parser/parser_test.go`
+- `docs/log.md`
+
+検証:
+- `go test ./...` を実行し、成功しました。
+- `go run .\cmd\emotion-to-scss check test-css\basic-ok` を実行し、`OK test-css\basic-ok\test.ts` を確認しました。
+
 ## CLIの実装
 
 Emotion CSS と同一ディレクトリ・同一ファイル名の SCSS を比較する検証専用 CLI を実装しました。

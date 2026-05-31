@@ -116,20 +116,20 @@ func scanTemplate(source string, start int) (string, int, error) {
 			return out.String(), i + 1, nil
 		case '$':
 			if i+1 < len(source) && source[i+1] == '{' {
-				_, next, err := scanExpression(source, i+2)
+				expr, next, err := scanExpression(source, i+2)
 				if err != nil {
 					return "", 0, err
 				}
 				dynamicIndex++
-				placeholder := fmt.Sprintf("__emotion_to_scss_dynamic_%d__", dynamicIndex)
+				value := interpolationValue(expr, dynamicIndex)
 				if interpolationStartsStatement(out.String()) {
 					out.WriteString("--emotion-to-scss-dynamic-")
 					out.WriteString(fmt.Sprint(dynamicIndex))
 					out.WriteString(": ")
-					out.WriteString(placeholder)
+					out.WriteString(value)
 					out.WriteString(";")
 				} else {
-					out.WriteString(placeholder)
+					out.WriteString(value)
 				}
 				i = next
 				continue
@@ -143,6 +143,16 @@ func scanTemplate(source string, start int) (string, int, error) {
 	}
 
 	return "", 0, fmt.Errorf("unterminated template literal")
+}
+
+var simpleIdentifierPattern = regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`)
+
+func interpolationValue(expr string, index int) string {
+	trimmed := strings.TrimSpace(expr)
+	if simpleIdentifierPattern.MatchString(trimmed) {
+		return "var(--" + trimmed + ")"
+	}
+	return fmt.Sprintf("__emotion_to_scss_dynamic_%d__", index)
 }
 
 func scanExpression(source string, start int) (string, int, error) {

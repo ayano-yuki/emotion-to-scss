@@ -1,0 +1,20 @@
+.StyledDiv {
+  background-color: var(--COLOR);
+  color: white;
+  padding: 16px;
+  border-radius: 8px;
+  font-weight: bold;
+
+  &:hover {
+    background-color: var(--HOVER_COLOR);
+  }
+}
+
+.StyledDiv2 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    font-size: 24px;
+}

@@ -47,6 +47,17 @@ func TestToComparableSCSS(t *testing.T) {
 	}
 }
 
+func TestSimpleIdentifierInterpolationBecomesCSSVariable(t *testing.T) {
+	styles, err := Parse("const buttonStyle = css`background-color: ${COLOR};`")
+	if err != nil {
+		t.Fatalf("Parse returned error: %v", err)
+	}
+	got := ToComparableSCSS(styles)
+	if !strings.Contains(got, "background-color: var(--COLOR);") {
+		t.Fatalf("expected CSS variable normalization, got: %s", got)
+	}
+}
+
 func TestParseUnterminatedTemplate(t *testing.T) {
 	_, err := Parse("const badStyle = css`color: red;")
 	if err == nil {
