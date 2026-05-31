@@ -1,6 +1,7 @@
 package verifier
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,14 @@ import (
 )
 
 func VerifyFile(inputPath string) (domain.VerificationResult, error) {
+	return VerifyFileWithOptions(inputPath, Options{})
+}
+
+type Options struct {
+	WriteAST bool
+}
+
+func VerifyFileWithOptions(inputPath string, opts Options) (domain.VerificationResult, error) {
 	result := domain.VerificationResult{
 		InputPath: inputPath,
 		SCSSPath:  matchingSCSSPath(inputPath),
@@ -51,6 +60,11 @@ func VerifyFile(inputPath string) (domain.VerificationResult, error) {
 	if err != nil {
 		return result, fmt.Errorf("parse SCSS CSS: %w", err)
 	}
+	if opts.WriteAST {
+		if err := writeASTFiles(inputPath, emotionAST, scssAST); err != nil {
+			return result, err
+		}
+	}
 	if !cssast.Equal(emotionAST, scssAST) {
 		result.Reason = "normalized CSS AST differs"
 		return result, nil
@@ -63,4 +77,21 @@ func VerifyFile(inputPath string) (domain.VerificationResult, error) {
 func matchingSCSSPath(inputPath string) string {
 	ext := filepath.Ext(inputPath)
 	return inputPath[:len(inputPath)-len(ext)] + ".scss"
+}
+
+func writeASTFiles(inputPath string, emotionAST cssast.Stylesheet, scssAST cssast.Stylesheet) error {
+	base := inputPath[:len(inputPath)-len(filepath.Ext(inputPath))]
+	if err := writeJSON(base+".emotion.ast.json", emotionAST); err != nil {
+		return err
+	}
+	return writeJSON(base+".scss.ast.json", scssAST)
+}
+
+func writeJSON(path string, value any) error {
+	data, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	return os.WriteFile(path, data, 0o644)
 }

@@ -1,5 +1,27 @@
 # LOG
 
+## ASTデバッグ出力
+
+正規化後 CSS AST をファイルへ出力するデバッグモードを追加しました。
+
+実装内容の詳細:
+- `check <input> --debug-ast` オプションを追加しました。
+- デバッグモードでは Emotion 側 AST を `<filename>.emotion.ast.json`、SCSS 側 AST を `<filename>.scss.ast.json` として入力ファイルと同じディレクトリに出力します。
+- verifier に AST 出力オプションを追加し、比較に使った正規化後 AST を JSON で保存するようにしました。
+- CLI と verifier の単体テストに AST 出力確認を追加しました。
+
+変更ファイル:
+- `internal/app/app.go`
+- `internal/app/app_test.go`
+- `internal/verifier/verifier.go`
+- `internal/verifier/verifier_test.go`
+- `docs/log.md`
+
+検証:
+- `go test ./...` を実行し、成功しました。
+- `go run .\cmd\emotion-to-scss check test-css\basic-ok --debug-ast` を実行し、成功しました。
+- `test-css\basic-ok\test.emotion.ast.json` と `test-css\basic-ok\test.scss.ast.json` が出力されることを確認しました。
+
 ## basic-ok fixture の確認
 
 `test-css\basic-ok` が等価ケースとして成功するよう、単純な Emotion 補間の正規化を修正しました。

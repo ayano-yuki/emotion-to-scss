@@ -20,11 +20,12 @@ const (
 )
 
 func Run(args []string, stdout, stderr io.Writer) (int, error) {
-	if len(args) != 2 || args[0] != "check" {
-		return ExitInvalidArgs, fmt.Errorf("usage: emotion-to-scss check <input>")
+	input, opts, err := parseArgs(args)
+	if err != nil {
+		return ExitInvalidArgs, err
 	}
 
-	files, err := collectInputs(args[1])
+	files, err := collectInputs(input)
 	if err != nil {
 		return ExitFileError, err
 	}
@@ -34,7 +35,9 @@ func Run(args []string, stdout, stderr io.Writer) (int, error) {
 
 	failed := false
 	for _, file := range files {
-		result, err := verifier.VerifyFile(file)
+		result, err := verifier.VerifyFileWithOptions(file, verifier.Options{
+			WriteAST: opts.debugAST,
+		})
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				return ExitFileError, err
@@ -55,6 +58,37 @@ func Run(args []string, stdout, stderr io.Writer) (int, error) {
 		return ExitVerificationFailed, nil
 	}
 	return ExitSuccess, nil
+}
+
+type options struct {
+	debugAST bool
+}
+
+func parseArgs(args []string) (string, options, error) {
+	if len(args) < 2 || args[0] != "check" {
+		return "", options{}, fmt.Errorf("usage: emotion-to-scss check <input> [--debug-ast]")
+	}
+
+	input := ""
+	opts := options{}
+	for _, arg := range args[1:] {
+		switch arg {
+		case "--debug-ast":
+			opts.debugAST = true
+		default:
+			if strings.HasPrefix(arg, "-") {
+				return "", options{}, fmt.Errorf("unknown option %q", arg)
+			}
+			if input != "" {
+				return "", options{}, fmt.Errorf("expected exactly one input")
+			}
+			input = arg
+		}
+	}
+	if input == "" {
+		return "", options{}, fmt.Errorf("expected input")
+	}
+	return input, opts, nil
 }
 
 func collectInputs(input string) ([]string, error) {

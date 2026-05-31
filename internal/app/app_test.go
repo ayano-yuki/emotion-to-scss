@@ -60,3 +60,30 @@ func TestRunInvalidArgs(t *testing.T) {
 		t.Fatalf("unexpected exit code: %d", code)
 	}
 }
+
+func TestRunCheckWithDebugAST(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "button.ts")
+	scss := filepath.Join(dir, "button.scss")
+
+	if err := os.WriteFile(input, []byte("const buttonStyle = css`color: red;`"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(scss, []byte(".buttonStyle { color: red; }"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	code, err := Run([]string{"check", input, "--debug-ast"}, &bytes.Buffer{}, &bytes.Buffer{})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if code != ExitSuccess {
+		t.Fatalf("unexpected exit code: %d", code)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "button.emotion.ast.json")); err != nil {
+		t.Fatalf("expected Emotion AST file: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "button.scss.ast.json")); err != nil {
+		t.Fatalf("expected SCSS AST file: %v", err)
+	}
+}

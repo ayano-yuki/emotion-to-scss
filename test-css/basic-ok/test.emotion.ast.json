@@ -1,0 +1,76 @@
+{
+  "Nodes": [
+    {
+      "AtRule": null,
+      "Rule": {
+        "Selector": ".StyledDiv",
+        "Declarations": [
+          {
+            "Property": "background-color",
+            "Value": "var(--COLOR)"
+          },
+          {
+            "Property": "color",
+            "Value": "white"
+          },
+          {
+            "Property": "padding",
+            "Value": "16px"
+          },
+          {
+            "Property": "border-radius",
+            "Value": "8px"
+          },
+          {
+            "Property": "font-weight",
+            "Value": "bold"
+          }
+        ]
+      }
+    },
+    {
+      "AtRule": null,
+      "Rule": {
+        "Selector": ".StyledDiv:hover",
+        "Declarations": [
+          {
+            "Property": "background-color",
+            "Value": "var(--HOVER_COLOR)"
+          }
+        ]
+      }
+    },
+    {
+      "AtRule": null,
+      "Rule": {
+        "Selector": ".StyledDiv2",
+        "Declarations": [
+          {
+            "Property": "position",
+            "Value": "absolute"
+          },
+          {
+            "Property": "top",
+            "Value": "0"
+          },
+          {
+            "Property": "left",
+            "Value": "0"
+          },
+          {
+            "Property": "width",
+            "Value": "100%"
+          },
+          {
+            "Property": "height",
+            "Value": "100%"
+          },
+          {
+            "Property": "font-size",
+            "Value": "24px"
+          }
+        ]
+      }
+    }
+  ]
+}
