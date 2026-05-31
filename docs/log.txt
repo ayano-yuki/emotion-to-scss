@@ -1,5 +1,25 @@
 ## 実装内容の概略
 
+CLI のビルドと、動作確認用 Emotion CSS サンプルを追加しました。
+
+実装内容の詳細:
+- `test-css/constants.ts` と `test-css/css.ts` を追加し、`css` tagged template literal と `styled.button` のサンプルを記述しました。
+- サンプルには静的宣言、値位置の動的補間、単独の動的補間、ネストセレクタ、at-rule を含めました。
+- CLI を `cli/emotion-to-scss.exe` にビルドしました。
+
+変更ファイル:
+- `test-css/constants.ts`
+- `test-css/css.ts`
+- `cli/emotion-to-scss.exe`
+- `docs/log.txt`
+
+検証:
+- `go build -o cli\emotion-to-scss.exe .\cmd\emotion-to-scss` を実行し、成功しました。
+- `.\cli\emotion-to-scss.exe check test-css` を実行し、成功しました。
+- `go test ./...` を実行し、成功しました。
+
+## 実装内容の概略
+
 Go module として emotion-to-scss CLI を実装しました。`convert`、`verify`、`check` コマンドを追加し、Emotion の `css` tagged template literal と `styled.*` tagged template literal を抽出して SCSS に変換できるようにしました。動的補間 `${...}` は対象に含め、検証時に扱える安定した placeholder へ置換します。
 
 実装内容の詳細:
