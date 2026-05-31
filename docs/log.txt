@@ -1,5 +1,34 @@
 ## 実装内容の概略
 
+`test-css` の Emotion サンプルを実際に変換できるよう parser を拡張し、SCSS と JSON レポートを `test-css` 内に生成しました。
+
+実装内容の詳細:
+- `export const ... = styled.button<T>\`...\`` のような exported styled template と TypeScript generic 付き tagged template を検出できるようにしました。
+- `sm: css\`...\`` のような object property 形式の Emotion CSS を検出できるようにしました。
+- ネストブロック直後の単独動的補間を custom property placeholder として SCSS 宣言化するよう修正しました。
+- `test-css/constants.scss` と `test-css/css.scss` を生成しました。
+- `test-css/convert-report.json` と `test-css/verify-report.json` を生成しました。
+- CLI を `cli/emotion-to-scss.exe` に再ビルドしました。
+
+変更ファイル:
+- `internal/parser/parser.go`
+- `internal/parser/parser_test.go`
+- `cli/emotion-to-scss.exe`
+- `test-css/constants.scss`
+- `test-css/css.scss`
+- `test-css/convert-report.json`
+- `test-css/verify-report.json`
+- `docs/log.txt`
+
+検証:
+- `go test ./...` を実行し、成功しました。
+- `go build -o cli\emotion-to-scss.exe .\cmd\emotion-to-scss` を実行し、成功しました。
+- `.\cli\emotion-to-scss.exe convert test-css --out test-css --overwrite --report test-css\convert-report.json` を実行し、成功しました。
+- `.\cli\emotion-to-scss.exe check test-css` を実行し、成功しました。
+- `.\cli\emotion-to-scss.exe verify test-css --out test-css --overwrite --report test-css\verify-report.json` を実行し、成功しました。
+
+## 実装内容の概略
+
 CLI のビルドと、動作確認用 Emotion CSS サンプルを追加しました。
 
 実装内容の詳細:
